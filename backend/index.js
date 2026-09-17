@@ -19,12 +19,18 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
+    // origin: [
+    //   "http://localhost:5173",
+    //   "http://localhost:5000/api/auth/signup",
+    //   "http://localhost:5000/api/auth/login",
+    //   "https://swapskill-com-1.onrender.com",
+    //   "https://swapskillcom.vercel.app",
+    // ],
     origin: [
-      "http://localhost:5173",
-      "http://localhost:5000/api/auth/signup",
-      "http://localhost:5000/api/auth/login",
-      "https://swapskill-com-1.onrender.com",
-    ],
+  "http://localhost:5173",
+  "http://localhost:5000",
+  "https://swapskillcom.vercel.app",
+],
     credentials: true,
   },
 });
@@ -33,12 +39,18 @@ const PORT = process.env.PORT || 5000;
 
 app.use(
   cors({
+    // origin: [
+    //   "http://localhost:5173",
+    //   "http://localhost:5000/api/auth/signup",
+    //   "http://localhost:5000/api/auth/login",
+    //   "https://swapskill-com-1.onrender.com",
+    //   "https://swapskillcom.vercel.app",
+    // ],
     origin: [
-      "http://localhost:5173",
-      "http://localhost:5000/api/auth/signup",
-      "http://localhost:5000/api/auth/login",
-      "https://swapskill-com-1.onrender.com",
-    ],
+  "http://localhost:5173",
+  "http://localhost:5000",
+  "https://swapskillcom.vercel.app",
+],
     credentials: true,
   })
 );
