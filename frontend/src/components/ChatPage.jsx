@@ -10,7 +10,8 @@ import {
 } from "react-icons/fa";
 
 // ── Socket singleton ──────────────────────────────────────
-const SOCKET_URL = "http://localhost:5000";
+// const SOCKET_URL = "http://localhost:5000";
+const SOCKET_URL = "https://swapskill-com-huej.onrender.com";
 let socket = null;
 const getSocket = () => {
   if (!socket) socket = io(SOCKET_URL, { transports: ["websocket"] });
@@ -378,7 +379,7 @@ const ChatPanel = ({ toUserId, toUserName, token, currentUser, roomId }) => {
     (async () => {
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/user/get-messages/${toUserId}`,
+          `https://swapskill-com-huej.onrender.com/api/user/get-messages/${toUserId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setMessages(res.data.messages || []);
@@ -404,7 +405,7 @@ const ChatPanel = ({ toUserId, toUserName, token, currentUser, roomId }) => {
     if (!text.trim()) return;
     try {
       await axios.post(
-        "http://localhost:5000/api/user/send-message",
+        "https://swapskill-com-huej.onrender.com/api/user/send-message",
         { toUserId, text },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -503,7 +504,7 @@ const ChatPage = () => {
     if (!rating) return;
     try {
       await axios.post(
-        "http://localhost:5000/api/user/rate-user",
+        "https://swapskill-com-huej.onrender.com/api/user/rate-user",
         { mentorId: toUserId, rating },
         { headers: { Authorization: `Bearer ${token}` } }
       );

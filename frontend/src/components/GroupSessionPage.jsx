@@ -8,7 +8,7 @@ import {
 } from "react-icons/fa";
 
 // ── Socket singleton (shared with ChatPage) ───────────────
-const SOCKET_URL = "http://localhost:5000";
+const SOCKET_URL = "https://swapskill-com-huej.onrender.com";
 let socket = null;
 const getSocket = () => {
   if (!socket) socket = io(SOCKET_URL, { transports: ["websocket"] });
