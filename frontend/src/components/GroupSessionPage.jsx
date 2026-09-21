@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import { io } from "socket.io-client";
 import {
   FaArrowLeft, FaUsers, FaPaperPlane, FaCopy, FaCheck,
-  FaPen, FaEraser, FaFont, FaTrash, FaDownload, FaCrown,
+  FaPen, FaEraser, FaFont, FaTrash, FaDownload, FaCrown, FaUndo, FaRedo,
 } from "react-icons/fa";
 
 // ── Socket singleton (shared with ChatPage) ───────────────
@@ -16,7 +16,7 @@ const getSocket = () => {
 };
 
 // ── Constants ─────────────────────────────────────────────
-const COLORS      = ["#1c1813","#5c6bc0","#d94f3d","#2d9e6b","#3b7dd8","#9b59b6","#f5c842"];
+const COLORS      = ["#ffffff","#5c6bc0","#d94f3d","#2d9e6b","#3b7dd8","#9b59b6","#f5c842"];
 const BRUSH_SIZES = [2, 5, 10, 20];
 const STICKY_BG   = ["#fef08a","#bbf7d0","#bfdbfe","#fecaca","#e9d5ff","#fed7aa"];
 
@@ -28,9 +28,10 @@ const Whiteboard = ({ roomId, currentUserId }) => {
   const lastPt     = useRef(null);
   const drawing    = useRef(false);
   const historyRef = useRef([]);
+  const redoRef = useRef([]);
 
   const [tool,      setTool]      = useState("pen");
-  const [color,     setColor]     = useState("#1c1813");
+  const [color,     setColor]     = useState("#ffffff");
   const [brushSize, setBrushSize] = useState(5);
   const [stickies,  setStickies]  = useState([]);
   const [dragId,    setDragId]    = useState(null);
@@ -39,16 +40,12 @@ const Whiteboard = ({ roomId, currentUserId }) => {
   useEffect(() => {
     const canvas = canvasRef.current;
     resizeCanvas(canvas);
-    const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#0d1117";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    drawGrid(ctx, canvas.width, canvas.height);
     snapshot();
     const onResize = () => {
+      const ctx = canvas.getContext("2d");
       const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
       resizeCanvas(canvas);
       ctx.putImageData(img, 0, 0);
-      drawGrid(ctx, canvas.width, canvas.height);
     };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
@@ -71,12 +68,6 @@ const Whiteboard = ({ roomId, currentUserId }) => {
   }, [roomId]);
 
   const resizeCanvas = (c) => { c.width = c.offsetWidth; c.height = c.offsetHeight; };
-  const drawGrid = (ctx, w, h) => {
-    ctx.save(); ctx.strokeStyle = "rgba(255,255,255,0.05)"; ctx.lineWidth = 0.8; const step = 28;
-    for (let x=0;x<=w;x+=step){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}
-    for (let y=0;y<=h;y+=step){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
-    ctx.restore();
-  };
   const snapshot = () => {
     const c=canvasRef.current, ctx=c.getContext("2d");
     historyRef.current.push(ctx.getImageData(0,0,c.width,c.height));
@@ -96,23 +87,34 @@ const Whiteboard = ({ roomId, currentUserId }) => {
   };
   const onPointerDown = (e) => {
     if (tool === "sticky") { addSticky(getPos(e)); return; }
-    snapshot(); drawing.current = true; lastPt.current = getPos(e);
+    snapshot(); redoRef.current = []; drawing.current = true; lastPt.current = getPos(e);
   };
   const onPointerMove = (e) => {
     if (!drawing.current) return;
     const pos = getPos(e); const { x:x0, y:y0 } = lastPt.current; const { x:x1, y:y1 } = pos;
     renderStroke(x0,y0,x1,y1,color,brushSize,tool);
     getSocket().emit("draw-stroke", { roomId, x0,y0,x1,y1, color, brushSize, tool });
-    drawGrid(canvasRef.current.getContext("2d"), canvasRef.current.width, canvasRef.current.height);
     lastPt.current = pos;
   };
   const onPointerUp = () => { drawing.current = false; lastPt.current = null; };
   const clearLocal = () => {
     const c=canvasRef.current, ctx=c.getContext("2d");
-    ctx.clearRect(0,0,c.width,c.height); ctx.fillStyle="#0d1117";
-    ctx.fillRect(0,0,c.width,c.height); drawGrid(ctx,c.width,c.height); setStickies([]);
+    snapshot();
+    ctx.clearRect(0,0,c.width,c.height); redoRef.current = []; setStickies([]);
   };
   const clearBoard = () => { clearLocal(); getSocket().emit("clear-board", { roomId }); };
+  const undo = () => {
+    if (!historyRef.current.length) return;
+    const c = canvasRef.current, ctx = c.getContext("2d");
+    redoRef.current.push(ctx.getImageData(0, 0, c.width, c.height));
+    ctx.putImageData(historyRef.current.pop(), 0, 0);
+  };
+  const redo = () => {
+    if (!redoRef.current.length) return;
+    const c = canvasRef.current, ctx = c.getContext("2d");
+    historyRef.current.push(ctx.getImageData(0, 0, c.width, c.height));
+    ctx.putImageData(redoRef.current.pop(), 0, 0);
+  };
   const downloadBoard = () => {
     const link = document.createElement("a");
     link.download = `swapskill-group-${Date.now()}.png`;
@@ -176,11 +178,17 @@ const Whiteboard = ({ roomId, currentUserId }) => {
         <button onClick={clearBoard} style={{padding:"6px 12px",borderRadius:8,border:"1px solid #d94f3d22",background:"var(--red-dim)",cursor:"pointer",color:"var(--red)",display:"flex",alignItems:"center",gap:5,fontSize:12,fontWeight:500}}>
           <FaTrash size={11}/> Clear
         </button>
+        <button onClick={undo} style={{padding:"6px 10px",borderRadius:8,border:"1px solid var(--border)",background:"transparent",cursor:"pointer",color:"var(--text-secondary)",display:"flex",alignItems:"center",gap:5,fontSize:12,fontWeight:500}} title="Undo">
+          <FaUndo size={11}/> Undo
+        </button>
+        <button onClick={redo} style={{padding:"6px 10px",borderRadius:8,border:"1px solid var(--border)",background:"transparent",cursor:"pointer",color:"var(--text-secondary)",display:"flex",alignItems:"center",gap:5,fontSize:12,fontWeight:500}} title="Redo">
+          <FaRedo size={11}/> Redo
+        </button>
       </div>
 
       {/* Canvas */}
-      <div style={{flex:1,position:"relative",overflow:"hidden"}} onMouseMove={onDrag} onMouseUp={stopDrag} onTouchMove={onDrag} onTouchEnd={stopDrag}>
-        <canvas ref={canvasRef} style={{width:"100%",height:"100%",display:"block",cursor:cursorMap[tool],touchAction:"none"}}
+      <div style={{flex:1,position:"relative",overflow:"hidden",backgroundColor:"#0d1117",backgroundImage:"linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)",backgroundSize:"28px 28px"}} onMouseMove={onDrag} onMouseUp={stopDrag} onTouchMove={onDrag} onTouchEnd={stopDrag}>
+        <canvas ref={canvasRef} style={{width:"100%",height:"100%",display:"block",cursor:cursorMap[tool],touchAction:"none",background:"transparent"}}
           onMouseDown={onPointerDown} onMouseMove={onPointerMove} onMouseUp={onPointerUp} onMouseLeave={onPointerUp}
           onTouchStart={onPointerDown} onTouchMove={onPointerMove} onTouchEnd={onPointerUp}/>
         {stickies.map(sticky => (

@@ -6,7 +6,7 @@ import { io } from "socket.io-client";
 import {
   FaArrowLeft, FaStar, FaCalendarAlt, FaPaperPlane,
   FaPen, FaEraser, FaFont, FaTrash, FaDownload,
-  FaCommentAlt, FaChalkboard,
+  FaCommentAlt, FaChalkboard, FaUndo, FaRedo,
 } from "react-icons/fa";
 
 // ── Socket singleton ──────────────────────────────────────
@@ -19,7 +19,7 @@ const getSocket = () => {
 };
 
 // ── Constants ─────────────────────────────────────────────
-const COLORS      = ["#ffffffff","#e07b2a","#d94f3d","#2d9e6b","#3b7dd8","#9b59b6","#f5c842"];
+const COLORS      = ["#ffffff","#e07b2a","#d94f3d","#2d9e6b","#3b7dd8","#9b59b6","#f5c842"];
 const BRUSH_SIZES = [2, 5, 10, 20];
 const STICKY_BG   = ["#fef08a","#bbf7d0","#bfdbfe","#fecaca","#e9d5ff","#fed7aa"];
 
@@ -33,9 +33,10 @@ const Whiteboard = ({ roomId, currentUserId, canEdit }) => {
   const lastPt      = useRef(null);
   const drawing     = useRef(false);
   const historyRef  = useRef([]);
+  const redoRef     = useRef([]);
 
   const [tool,      setTool]      = useState("pen");
-  const [color,     setColor]     = useState("#1c1813");
+  const [color,     setColor]     = useState("#ffffff");
   const [brushSize, setBrushSize] = useState(5);
   const [stickies,  setStickies]  = useState([]);
   const [dragId,    setDragId]    = useState(null);
@@ -44,17 +45,13 @@ const Whiteboard = ({ roomId, currentUserId, canEdit }) => {
   useEffect(() => {
     const canvas = canvasRef.current;
     resize(canvas);
-    const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#0d1117";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    drawGrid(ctx, canvas.width, canvas.height);
     snapshot();
 
     const onResize = () => {
+      const ctx = canvas.getContext("2d");
       const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
       resize(canvas);
       ctx.putImageData(img, 0, 0);
-      drawGrid(ctx, canvas.width, canvas.height);
     };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
@@ -63,26 +60,15 @@ const Whiteboard = ({ roomId, currentUserId, canEdit }) => {
   const clearLocal = useCallback(() => {
     const canvas = canvasRef.current;
     const ctx    = canvas.getContext("2d");
+    snapshot();
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    ctx.fillStyle = "#0d1117";
-    ctx.fillRect(0,0,canvas.width,canvas.height);
-    drawGrid(ctx,canvas.width,canvas.height);
+    redoRef.current = [];
     setStickies([]);
   }, []);
 
   const resize = (canvas) => {
     canvas.width  = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
-  };
-
-  const drawGrid = (ctx, w, h) => {
-    ctx.save();
-    ctx.strokeStyle = "rgba(255,255,255,0.05)";
-    ctx.lineWidth   = 0.8;
-    const step = 28;
-    for (let x=0; x<=w; x+=step) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
-    for (let y=0; y<=h; y+=step) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
-    ctx.restore();
   };
 
   const snapshot = () => {
@@ -118,6 +104,7 @@ const Whiteboard = ({ roomId, currentUserId, canEdit }) => {
     if (!canEdit) return;
     if (tool === "sticky") { addSticky(getPos(e)); return; }
     snapshot();
+    redoRef.current = [];
     drawing.current = true;
     lastPt.current  = getPos(e);
   };
@@ -130,11 +117,26 @@ const Whiteboard = ({ roomId, currentUserId, canEdit }) => {
     const { x:x1, y:y1 } = pos;
     renderStroke(x0,y0,x1,y1,color,brushSize,tool);
     getSocket().emit("draw-stroke", { roomId, x0,y0,x1,y1, color, brushSize, tool });
-    drawGrid(canvasRef.current.getContext("2d"), canvasRef.current.width, canvasRef.current.height);
     lastPt.current = pos;
   };
 
   const onPointerUp = () => { drawing.current = false; lastPt.current = null; };
+
+  const undo = () => {
+    if (!historyRef.current.length) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    redoRef.current.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+    ctx.putImageData(historyRef.current.pop(), 0, 0);
+  };
+
+  const redo = () => {
+    if (!redoRef.current.length) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    historyRef.current.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+    ctx.putImageData(redoRef.current.pop(), 0, 0);
+  };
 
   function clearBoard() {
     if (!canEdit) return;
@@ -298,6 +300,12 @@ const Whiteboard = ({ roomId, currentUserId, canEdit }) => {
         <button onClick={clearBoard} className="wb-action-btn wb-clear-btn" title="Clear">
           <FaTrash size={11}/> <span className="wb-btn-label">Clear</span>
         </button>
+        <button onClick={undo} className="wb-action-btn" title="Undo">
+          <FaUndo size={11}/> <span className="wb-btn-label">Undo</span>
+        </button>
+        <button onClick={redo} className="wb-action-btn" title="Redo">
+          <FaRedo size={11}/> <span className="wb-btn-label">Redo</span>
+        </button>
       </div>}
 
       {/* ── Session strip ── */}
@@ -312,13 +320,13 @@ const Whiteboard = ({ roomId, currentUserId, canEdit }) => {
 
       {/* ── Canvas + stickies ── */}
       <div
-        style={{ flex:1, position:"relative", overflow:"hidden" }}
+        style={{ flex:1, position:"relative", overflow:"hidden", backgroundColor:"#0d1117", backgroundImage:"linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)", backgroundSize:"28px 28px" }}
         onMouseMove={onDrag} onMouseUp={stopDrag}
         onTouchMove={onDrag} onTouchEnd={stopDrag}
       >
         <canvas
           ref={canvasRef}
-          style={{ width:"100%", height:"100%", display:"block", cursor:canEdit ? cursorMap[tool] : "default", touchAction:"none" }}
+          style={{ width:"100%", height:"100%", display:"block", cursor:canEdit ? cursorMap[tool] : "default", touchAction:"none", background:"transparent" }}
           onMouseDown={onPointerDown}
           onMouseMove={onPointerMove}
           onMouseUp={onPointerUp}
