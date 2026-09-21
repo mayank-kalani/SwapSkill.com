@@ -527,6 +527,7 @@ const Dashboard = () => {
   const [pendingReqs, setPendingReqs] = useState([]);
   const [acceptedReqs, setAcceptedReqs] = useState([]);
   const [prevPending, setPrevPending] = useState(null); // for diff → notifications
+  const notificationIds = useRef(new Set());
   const [sideTab, setSideTab] = useState("friends");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -590,34 +591,64 @@ const Dashboard = () => {
 
       // diff: detect newly accepted or declined since last poll
       if (prevPending !== null) {
-        prevPending.forEach((old) => {
-          const stillPending = pending.find((p) => p._id === old._id);
-          const nowAccepted = accepted.find((a) => a._id === old._id);
-          if (!stillPending && !nowAccepted) {
-            // was removed from pending and NOT in accepted → declined
-            dispatch(
-              addNotification({
-                id: old._id,
-                type: "declined",
-                name: old.from?.name || "Someone",
-                skill: old.skill,
-                reqType: old.type,
-                time: new Date().toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }),
-                read: false,
-              }),
-            );
-          }
-        });
-      }
-      setPrevPending(pending);
+  prevPending.forEach((old) => {
+    const stillPending = pending.find((p) => p._id === old._id);
+    const nowAccepted = accepted.find((a) => a._id === old._id);
+
+    // Request accepted
+    if (!stillPending && nowAccepted) {
+      // Prevent duplicate notification
+      if (notificationIds.current.has(old._id)) return;
+
+      notificationIds.current.add(old._id);
+
+      dispatch(
+        addNotification({
+          id: old._id,
+          type: "accepted",
+          name: old.from?.name || old.to?.name || "Someone",
+          skill: old.skill,
+          reqType: old.type,
+          time: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          read: false,
+        })
+      );
+    }
+
+    // Request declined
+    if (!stillPending && !nowAccepted) {
+      // Prevent duplicate notification
+      if (notificationIds.current.has(old._id)) return;
+
+      notificationIds.current.add(old._id);
+
+      dispatch(
+        addNotification({
+          id: old._id,
+          type: "declined",
+          name: old.from?.name || old.to?.name || "Someone",
+          skill: old.skill,
+          reqType: old.type,
+          time: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          read: false,
+        })
+      );
+    }
+  });
+}
+
+setPrevPending(pending);
     } catch (err) {
       console.error("Failed to fetch requests:", err);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [token,, prevPending]);
 
   useEffect(() => {
     fetchRequests();
