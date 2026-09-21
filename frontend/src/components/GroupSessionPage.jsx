@@ -195,7 +195,7 @@ const Whiteboard = ({ roomId, currentUserId }) => {
               <button onClick={() => removeSticky(sticky.id)} style={{background:"none",border:"none",cursor:"pointer",color:"rgba(0,0,0,0.35)",fontSize:12,padding:2,lineHeight:1}}>✕</button>
             </div>
             <textarea value={sticky.text} onChange={e => updateSticky(sticky.id,e.target.value)} placeholder="Type here..."
-              style={{width:"100%",border:"none",background:"transparent",resize:"none",fontSize:12,color:"#1c1813",outline:"none",fontFamily:"inherit",minHeight:72,lineHeight:1.5,userSelect:"text"}}/>
+              style={{width:"100%",border:"none",background:"transparent",resize:"none",fontSize:12,color:"var(--text-primary)",outline:"none",fontFamily:"inherit",minHeight:72,lineHeight:1.5,userSelect:"text"}}/>
           </div>
         ))}
       </div>

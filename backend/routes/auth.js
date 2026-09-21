@@ -151,6 +151,10 @@ router.post("/login", async (req, res) => {
         canTeach: user.canTeach,
         wantToLearn: user.wantToLearn,
         pricePerHour: user.pricePerHour || 0,
+        about: user.about || "",
+        linkedin: user.linkedin || "",
+        github: user.github || "",
+        website: user.website || "",
       },
     });
   } catch (err) {

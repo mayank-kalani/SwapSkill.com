@@ -38,6 +38,56 @@ const skillOptions = [
   { value: "Figma", label: "Figma" },
   { value: "C++", label: "C++" },
 ];
+
+const skillSelectStyles = {
+  control: (base, state) => ({
+    ...base,
+    minHeight: 42,
+    backgroundColor: "var(--bg-input)",
+    borderColor: state.isFocused ? "var(--accent)" : "var(--border)",
+    boxShadow: state.isFocused ? "0 0 0 3px var(--accent-glow)" : "none",
+    color: "var(--text-primary)",
+    ":hover": { borderColor: "var(--accent)" },
+  }),
+  menu: (base) => ({
+    ...base,
+    backgroundColor: "var(--bg-card)",
+    border: "1px solid var(--border)",
+    zIndex: 20,
+  }),
+  menuList: (base) => ({
+    ...base,
+    backgroundColor: "var(--bg-card)",
+    padding: 4,
+  }),
+  option: (base, state) => ({
+    ...base,
+    backgroundColor: state.isFocused ? "var(--accent-dim)" : "transparent",
+    color: "var(--text-primary)",
+    borderRadius: 6,
+    cursor: "pointer",
+  }),
+  multiValue: (base) => ({
+    ...base,
+    backgroundColor: "var(--accent-dim)",
+  }),
+  multiValueLabel: (base) => ({
+    ...base,
+    color: "var(--accent)",
+  }),
+  input: (base) => ({
+    ...base,
+    color: "var(--text-primary)",
+  }),
+  placeholder: (base) => ({
+    ...base,
+    color: "var(--text-muted)",
+  }),
+  singleValue: (base) => ({
+    ...base,
+    color: "var(--text-primary)",
+  }),
+};
 /* parse comma/newline separated skills into array */
 const parseSkills = (str) => [
   ...new Set(
@@ -265,13 +315,27 @@ const EditProfile = () => {
           zIndex: 50,
         }}
       >
-        <FaExchangeAlt style={{ color: "var(--accent)", fontSize: 16 }} />
-        <span
-          className="grad-text"
-          style={{ fontWeight: 800, fontSize: 17, letterSpacing: "-0.03em" }}
+        <button
+          type="button"
+          onClick={() => navigate("/dashboard")}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            border: "none",
+            background: "none",
+            padding: 0,
+            cursor: "pointer",
+          }}
         >
-          SwapSkill
-        </span>
+          <FaExchangeAlt style={{ color: "var(--accent)", fontSize: 16 }} />
+          <span
+            className="grad-text"
+            style={{ fontWeight: 800, fontSize: 17, letterSpacing: "-0.03em" }}
+          >
+            SwapSkill
+          </span>
+        </button>
         <div style={{ flex: 1 }} />
         <button
           onClick={() => navigate("/dashboard")}
@@ -290,7 +354,7 @@ const EditProfile = () => {
         <button
           onClick={() => {
             dispatch(logout());
-            window.location.href = "/";
+            navigate("/", { replace: true });
           }}
           className="btn-danger"
           style={{
@@ -553,6 +617,7 @@ const EditProfile = () => {
                       value={canTeach}
                       onChange={setCanTeach}
                       placeholder="Type or select skills..."
+                      styles={skillSelectStyles}
                     />
                   </div>
 
@@ -572,6 +637,7 @@ const EditProfile = () => {
                       value={wantToLearn}
                       onChange={setWantToLearn}
                       placeholder="Type or select skills..."
+                      styles={skillSelectStyles}
                     />
                   </div>
                   <button

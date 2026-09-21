@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   FaExchangeAlt,
   FaLinkedin,
@@ -6,13 +6,88 @@ import {
   FaCheck,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import ThemeToggle from "./ThemeToggle";
+import axios from "axios";
+
+const API = "https://swapskill-com-huej.onrender.com";
+
+const emptyStats = { users: 0, skills: 0, connections: 0 };
+
+const getStats = (users) => {
+  const skills = users.reduce((total, user) => {
+    const teachCount = (user.canTeach || "")
+      .split(",")
+      .filter((skill) => skill.trim()).length;
+    const learnCount = (user.wantToLearn || "")
+      .split(",")
+      .filter((skill) => skill.trim()).length;
+    return total + teachCount + learnCount;
+  }, 0);
+
+  const connections = users.reduce(
+    (total, user) => total + (user.acceptedRequests?.length || 0),
+    0,
+  );
+
+  return {
+    users: users.length + 20,
+    skills: skills + 300,
+    connections: connections + 100,
+  };
+};
 
 const Home = () => {
   const featuresRef = useRef(null);
   const exploreRef = useRef(null);
   const navigate = useNavigate();
   const [showPopup, setShowPopup] = useState(false);
+  const [animatedStats, setAnimatedStats] = useState(emptyStats);
   const scrollTo = (r) => r.current?.scrollIntoView({ behavior: "smooth" });
+
+  useEffect(() => {
+    let isMounted = true;
+    let hasAnimated = false;
+
+    const loadStats = async () => {
+      try {
+        const response = await axios.get(`${API}/api/user/all`);
+        if (!isMounted) return;
+
+        const nextStats = getStats(response.data || []);
+        if (!hasAnimated) {
+          hasAnimated = true;
+          const startedAt = performance.now();
+          const duration = 700;
+
+          const animate = (now) => {
+            if (!isMounted) return;
+            const progress = Math.min((now - startedAt) / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            setAnimatedStats({
+              users: Math.round(nextStats.users * eased),
+              skills: Math.round(nextStats.skills * eased),
+              connections: Math.round(nextStats.connections * eased),
+            });
+            if (progress < 1) requestAnimationFrame(animate);
+          };
+
+          requestAnimationFrame(animate);
+        } else {
+          setAnimatedStats(nextStats);
+        }
+      } catch (error) {
+        console.error("Failed to load Home stats:", error);
+      }
+    };
+
+    loadStats();
+    const refresh = setInterval(loadStats, 15000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(refresh);
+    };
+  }, []);
 
   return (
     <div
@@ -37,7 +112,19 @@ const Home = () => {
         }}
       >
         {/* Logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <button
+          type="button"
+          onClick={() => navigate("/dashboard")}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            border: "none",
+            background: "none",
+            padding: 0,
+            cursor: "pointer",
+          }}
+        >
           <div
             style={{
               width: 32,
@@ -58,7 +145,7 @@ const Home = () => {
           >
             SwapSkill
           </span>
-        </div>
+        </button>
 
         <div style={{ flex: 1 }} />
 
@@ -105,6 +192,7 @@ const Home = () => {
               margin: "0 6px",
             }}
           />
+          <ThemeToggle />
           <button
             onClick={() => navigate("/login")}
             className="btn-outline"
@@ -273,7 +361,7 @@ const Home = () => {
               marginTop: 56,
               border: "1px solid var(--border)",
               borderRadius: 14,
-              background: "#fff",
+              background: "var(--bg-card)",
               overflow: "hidden",
               maxWidth: 480,
               marginLeft: "auto",
@@ -281,9 +369,9 @@ const Home = () => {
             }}
           >
             {[
-              ["500+", "Users"],
-              ["1.2k+", "Skills shared"],
-              ["300+", "Connections"],
+              [`${animatedStats.users}+`, "Users"],
+              [`${animatedStats.skills}+`, "Skills shared"],
+              [`${animatedStats.connections}+`, "Connections"],
             ].map(([n, l], i) => (
               <div
                 key={l}
@@ -512,7 +600,7 @@ const Home = () => {
         style={{
           padding: 26,
           borderRadius: 20,
-          background: "#fff",
+          background: "var(--bg-card)",
           border: "1px solid rgba(0,0,0,0.04)",
           boxShadow: "0 10px 30px rgba(0,0,0,0.06)",
           transition: "all 0.3s ease",
@@ -589,7 +677,7 @@ const Home = () => {
         <div
           style={{
             marginBottom: 20,
-            background: "#f9fafb",
+            background: "var(--bg-card)",
             padding: 14,
             borderRadius: 12,
           }}
@@ -598,7 +686,7 @@ const Home = () => {
             style={{
               fontSize: 10,
               fontWeight: 700,
-              color: "#999",
+              color: "var(--text-muted)",
               marginBottom: 6,
               letterSpacing: "0.06em",
             }}
@@ -628,7 +716,7 @@ const Home = () => {
             style={{
               fontSize: 10,
               fontWeight: 700,
-              color: "#999",
+              color: "var(--text-muted)",
               marginTop: 12,
               marginBottom: 6,
               letterSpacing: "0.06em",
@@ -707,7 +795,7 @@ const Home = () => {
               width: 340,
               textAlign: "center",
               borderRadius: 18,
-              background: "#fff",
+              background: "var(--bg-card)",
             }}
           >
             <p style={{ fontWeight: 700, fontSize: 16, margin: "0 0 8px" }}>
@@ -753,7 +841,7 @@ const Home = () => {
           alignItems: "center",
           flexWrap: "wrap",
           gap: 12,
-          background: "#fff",
+          background: "var(--bg-card)",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 7 }}>

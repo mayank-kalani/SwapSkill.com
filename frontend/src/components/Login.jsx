@@ -38,14 +38,20 @@ const Login = () => {
       <div style={{ width: "100%", maxWidth: 380, position: "relative" }}>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-            <FaExchangeAlt style={{ color: "var(--accent)", fontSize: 18 }} />
-            <span className="grad-text" style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-0.03em" }}>SwapSkill</span>
+            <button
+              type="button"
+              onClick={() => navigate("/dashboard")}
+              style={{ display: "inline-flex", alignItems: "center", gap: 8, border: "none", background: "none", padding: 0, cursor: "pointer" }}
+            >
+              <FaExchangeAlt style={{ color: "var(--accent)", fontSize: 18 }} />
+              <span className="grad-text" style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-0.03em" }}>SwapSkill</span>
+            </button>
           </div>
           <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.03em", margin: "6px 0 4px" }}>Welcome back</h1>
           <p style={{ fontSize: 13, color: "var(--text-muted)", margin: 0 }}>Sign in to your account</p>
         </div>
 
-        <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: 18, padding: "28px", boxShadow: "0 4px 32px rgba(233,30,140,0.06)" }}>
+        <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 18, padding: "28px", boxShadow: "0 4px 32px rgba(233,30,140,0.06)" }}>
           {error && (
             <div style={{ background: "var(--red-dim)", border: "1px solid var(--red-border)", borderRadius: 9, padding: "9px 13px", marginBottom: 18, fontSize: 13, color: "var(--red)" }}>
               {error}

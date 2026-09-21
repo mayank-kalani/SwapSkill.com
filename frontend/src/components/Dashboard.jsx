@@ -35,6 +35,7 @@ import {
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import ThemeToggle from "./ThemeToggle";
 
 
 // const API = "http://localhost:5000";
@@ -151,6 +152,27 @@ const SkeletonCard = () => (
   </div>
 );
 
+const getUserRating = (user) => {
+  const ratings = Array.isArray(user?.ratings) ? user.ratings : [];
+  if (!ratings.length) return { avg: 0, total: 0 };
+
+  return {
+    avg: ratings.reduce((sum, rating) => sum + (rating.stars || 0), 0) / ratings.length,
+    total: ratings.length,
+  };
+};
+
+const sortUsersByRating = (users, currentUserId) =>
+  [...users].sort((a, b) => {
+    if (a._id === currentUserId) return -1;
+    if (b._id === currentUserId) return 1;
+
+    const ratingDifference = getUserRating(b).avg - getUserRating(a).avg;
+    if (ratingDifference !== 0) return ratingDifference;
+
+    return getUserRating(b).total - getUserRating(a).total;
+  });
+
 /* ─── Onboarding banner ───────────────────────────────── */
 const OnboardingBanner = ({ user, connections, navigate }) => {
   const hasSkills = user?.canTeach || user?.wantToLearn;
@@ -170,8 +192,8 @@ const OnboardingBanner = ({ user, connections, navigate }) => {
     <div
       style={{
         background:
-          "linear-gradient(135deg, var(--accent-bg) 0%, #fff8f0 100%)",
-        border: "1px solid #e07b2a22",
+  "linear-gradient(135deg, var(--accent-bg) 0%, var(--bg-card) 100%)",
+border: "1px solid var(--accent-border)",
         borderRadius: 16,
         padding: "18px 22px",
         marginBottom: 20,
@@ -567,9 +589,7 @@ const Dashboard = () => {
     axios
       .get(`${API}/api/user/all`)
       .then((res) => {
-        const sorted = res.data.sort((a, b) =>
-          a._id === loggedInUser._id ? -1 : b._id === loggedInUser._id ? 1 : 0,
-        );
+        const sorted = sortUsersByRating(res.data, loggedInUser._id);
         setUsers(sorted);
         setFilteredUsers(sorted);
       })
@@ -693,12 +713,12 @@ setPrevPending(pending);
     const term = e.target.value.toLowerCase();
     setSearchTerm(term);
     setFilteredUsers(
-      users.filter(
+      sortUsersByRating(users.filter(
         (u) =>
           u.name.toLowerCase().includes(term) ||
           (u.canTeach && u.canTeach.toLowerCase().includes(term)) ||
           (u.wantToLearn && u.wantToLearn.toLowerCase().includes(term)),
-      ),
+      ), loggedInUser?._id),
     );
   };
 
@@ -726,7 +746,7 @@ setPrevPending(pending);
             : u,
         );
       setUsers(upd);
-      setFilteredUsers(upd);
+      setFilteredUsers(sortUsersByRating(upd(users), loggedInUser?._id));
     } catch (err) {
       toast.error(err?.response?.data?.error || "Failed to send request.");
     }
@@ -1282,7 +1302,7 @@ setPrevPending(pending);
         <button
           onClick={() => {
             dispatch(logout());
-            window.location.href = "/";
+            navigate("/", { replace: true });
           }}
           style={{
             width: "100%",
@@ -1672,13 +1692,19 @@ setPrevPending(pending);
         }}
       >
         {/* ── Logo ── */}
-        <div
+        <button
+          type="button"
+          onClick={() => navigate("/dashboard")}
           style={{
             display: "flex",
             alignItems: "center",
             gap: 8,
             flexShrink: 0,
             marginRight: 4,
+            padding: 0,
+            border: "none",
+            background: "none",
+            cursor: "pointer",
           }}
         >
           <div
@@ -1701,7 +1727,7 @@ setPrevPending(pending);
           >
             SwapSkill
           </span>
-        </div>
+        </button>
 
         {/* ── Search ── */}
         <div style={{ flex: 1, maxWidth: "100vw" }}>
@@ -1753,7 +1779,7 @@ setPrevPending(pending);
               <button
                 onClick={() => {
                   setSearchTerm("");
-                  setFilteredUsers(users);
+                  setFilteredUsers(sortUsersByRating(users, loggedInUser?._id));
                 }}
                 style={{
                   background: "var(--bg-deep)",
@@ -1879,6 +1905,8 @@ setPrevPending(pending);
               />
             )}
           </div>
+
+          <ThemeToggle />
 
           {/* Divider */}
           <div style={{ width: 1, height: 22, background: "var(--border)" }} />
@@ -2070,11 +2098,11 @@ setPrevPending(pending);
                   onClick={() => {
                     if (tag === "All") {
                       setSearchTerm("");
-                      setFilteredUsers(users);
+                      setFilteredUsers(sortUsersByRating(users, loggedInUser?._id));
                     } else {
                       setSearchTerm(tag);
                       setFilteredUsers(
-                        users.filter(
+                        sortUsersByRating(users.filter(
                           (u) =>
                             (u.canTeach || "")
                               .toLowerCase()
@@ -2082,7 +2110,7 @@ setPrevPending(pending);
                             (u.wantToLearn || "")
                               .toLowerCase()
                               .includes(tag.toLowerCase()),
-                        ),
+                        ), loggedInUser?._id),
                       );
                     }
                   }}
@@ -2157,8 +2185,8 @@ setPrevPending(pending);
                     style={{
                       padding: 22,
                       borderRadius: 20,
-                      background: "#fff",
-                      border: "1px solid rgba(0,0,0,0.04)",
+                      background: "var(--bg-card)",
+                      border: "1px solid var(--border)",
                       boxShadow: "0 10px 30px rgba(0,0,0,0.06)",
                       transition: "all 0.3s ease",
                       position: "relative",
@@ -2251,14 +2279,14 @@ setPrevPending(pending);
                     {/* Skills */}
                     <div
                       style={{
-                        background: "#f9fafb",
+                        background: "var(--bg-skill-panel)",
                         padding: 12,
                         borderRadius: 12,
                         marginBottom: 14,
                       }}
                     >
                       <p
-                        style={{ fontSize: 10, fontWeight: 700, color: "#999" }}
+                        style={{ fontSize: 10, fontWeight: 700, color: "var(--text-muted)" }}
                       >
                         CAN TEACH
                       </p>
@@ -2286,7 +2314,7 @@ setPrevPending(pending);
                         style={{
                           fontSize: 10,
                           fontWeight: 700,
-                          color: "#999",
+                          color: "var(--text-muted)",
                           marginTop: 10,
                         }}
                       >
@@ -2331,7 +2359,7 @@ setPrevPending(pending);
                       {[...Array(emptyStars)].map((_, i) => (
                         <FaRegStar
                           key={i}
-                          style={{ color: "#ddd", fontSize: 11 }}
+                          style={{ color: "var(--border)", fontSize: 11 }}
                         />
                       ))}
                       <span

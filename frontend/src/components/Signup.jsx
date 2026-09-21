@@ -140,17 +140,23 @@ const Signup = () => {
               marginBottom: 8,
             }}
           >
-            <FaExchangeAlt style={{ color: "var(--accent)", fontSize: 18 }} />
-            <span
-              className="grad-text"
-              style={{
-                fontSize: 20,
-                fontWeight: 800,
-                letterSpacing: "-0.03em",
-              }}
+            <button
+              type="button"
+              onClick={() => navigate("/dashboard")}
+              style={{ display: "inline-flex", alignItems: "center", gap: 8, border: "none", background: "none", padding: 0, cursor: "pointer" }}
             >
-              SwapSkill
-            </span>
+              <FaExchangeAlt style={{ color: "var(--accent)", fontSize: 18 }} />
+              <span
+                className="grad-text"
+                style={{
+                  fontSize: 20,
+                  fontWeight: 800,
+                  letterSpacing: "-0.03em",
+                }}
+              >
+                SwapSkill
+              </span>
+            </button>
           </div>
 
           <h1
@@ -177,7 +183,7 @@ const Signup = () => {
 
         <div
           style={{
-            background: "#fff",
+            background: "var(--bg-card)",
             border: "1px solid var(--border)",
             borderRadius: 18,
             padding: "28px",

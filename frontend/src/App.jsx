@@ -10,10 +10,11 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
 import ChatPage from "./components/ChatPage";
 import GroupSessionPage from "./components/GroupSessionPage";
+import { ThemeProvider } from "./context/ThemeProvider";
 
 function App() {
   return (
-    <>
+    <ThemeProvider>
       <TokenLoader />
 
       <Routes>
@@ -31,7 +32,7 @@ function App() {
         <Route path="/group-session" element={<ProtectedRoute><GroupSessionPage /></ProtectedRoute>} />
 
       </Routes>
-    </>
+    </ThemeProvider>
   );
 }
 

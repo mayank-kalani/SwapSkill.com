@@ -356,7 +356,7 @@ const Whiteboard = ({ roomId, currentUserId, canEdit }) => {
               placeholder="Type here..."
               style={{
                 width:"100%", border:"none", background:"transparent", resize:"none",
-                fontSize:12, color:"#1c1813", outline:"none", fontFamily:"inherit",
+                fontSize:12, color:"var(--text-primary)", outline:"none", fontFamily:"inherit",
                 minHeight:68, lineHeight:1.5, userSelect:"text",
               }}
             />
