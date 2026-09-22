@@ -77,7 +77,8 @@ const Whiteboard = ({ roomId, currentUserId }) => {
     const ctx = canvasRef.current.getContext("2d");
     ctx.save(); ctx.lineCap="round"; ctx.lineJoin="round";
     ctx.globalCompositeOperation = t==="eraser" ? "destination-out" : "source-over";
-    ctx.strokeStyle = t==="eraser" ? "rgba(0,0,0,1)" : c; ctx.lineWidth = t==="eraser" ? bs*4 : bs;
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = t==="eraser" ? "rgba(0,0,0,1)" : c; ctx.lineWidth = t==="eraser" ? bs*2 : bs;
     ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke(); ctx.restore();
   };
   const getPos = (e) => {
@@ -203,7 +204,7 @@ const Whiteboard = ({ roomId, currentUserId }) => {
               <button onClick={() => removeSticky(sticky.id)} style={{background:"none",border:"none",cursor:"pointer",color:"rgba(0,0,0,0.35)",fontSize:12,padding:2,lineHeight:1}}>✕</button>
             </div>
             <textarea value={sticky.text} onChange={e => updateSticky(sticky.id,e.target.value)} placeholder="Type here..."
-              style={{width:"100%",border:"none",background:"transparent",resize:"none",fontSize:12,color:"var(--text-primary)",outline:"none",fontFamily:"inherit",minHeight:72,lineHeight:1.5,userSelect:"text"}}/>
+              style={{width:"100%",border:"none",background:"transparent",resize:"none",fontSize:12,color:"#1c1813",outline:"none",fontFamily:"inherit",minHeight:72,lineHeight:1.5,userSelect:"text"}}/>
           </div>
         ))}
       </div>

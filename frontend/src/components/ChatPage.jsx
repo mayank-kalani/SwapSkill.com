@@ -85,8 +85,9 @@ const Whiteboard = ({ roomId, currentUserId, canEdit }) => {
     ctx.lineCap   = "round";
     ctx.lineJoin  = "round";
     ctx.globalCompositeOperation = t==="eraser" ? "destination-out" : "source-over";
+    ctx.globalAlpha = 1;
     ctx.strokeStyle = t==="eraser" ? "rgba(0,0,0,1)" : c;
-    ctx.lineWidth   = t==="eraser" ? bs*4 : bs;
+    ctx.lineWidth   = t==="eraser" ? bs*2 : bs;
     ctx.beginPath();
     ctx.moveTo(x0,y0);
     ctx.lineTo(x1,y1);
@@ -364,7 +365,7 @@ const Whiteboard = ({ roomId, currentUserId, canEdit }) => {
               placeholder="Type here..."
               style={{
                 width:"100%", border:"none", background:"transparent", resize:"none",
-                fontSize:12, color:"var(--text-primary)", outline:"none", fontFamily:"inherit",
+                fontSize:12, color:"#1c1813", outline:"none", fontFamily:"inherit",
                 minHeight:68, lineHeight:1.5, userSelect:"text",
               }}
             />
